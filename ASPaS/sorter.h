@@ -115,11 +115,12 @@ namespace aspas
 
 } // end namespace aspas
 
-#ifdef __AVX2__
-#include "sorter_avx2.hpp"
-#else
+
 #ifdef __AVX__
 #include "sorter_avx.h"
+#else
+#ifdef __AVX2__
+#include "sorter_avx2.h"
 #endif
 #endif
 

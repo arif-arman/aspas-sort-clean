@@ -47,5 +47,11 @@
     <ClInclude Include="aspas_merge_avx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="sorter_avx2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aspas_merge_avx2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

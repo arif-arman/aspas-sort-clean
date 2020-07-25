@@ -138,6 +138,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -158,11 +159,13 @@
   <ItemGroup>
     <ClInclude Include="aspas.h" />
     <ClInclude Include="aspas_merge_avx.h" />
+    <ClInclude Include="aspas_merge_avx2.h" />
     <ClInclude Include="extintrin.h" />
     <ClInclude Include="merger.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="sorter.h" />
     <ClInclude Include="sorter_avx.h" />
+    <ClInclude Include="sorter_avx2.h" />
     <ClInclude Include="tools.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

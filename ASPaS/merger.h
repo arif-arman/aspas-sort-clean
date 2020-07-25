@@ -28,7 +28,14 @@
 #include "aspas.h" 
 #include "tools.h" 
 
+
+#ifdef __AVX__
 #include "aspas_merge_avx.h"
+#else 
+#ifdef __AVX2__
+#include "aspas_merge_avx2.h"
+#endif 
+#endif
 
 namespace aspas
 {

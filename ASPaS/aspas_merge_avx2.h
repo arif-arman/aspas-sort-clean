@@ -1,3 +1,4 @@
+#pragma once
 /*
 * (c) 2015 Virginia Polytechnic Institute & State University (Virginia Tech)
 *
@@ -14,13 +15,7 @@
 *
 */
 
-/**
- * @file aspas_merge_avx.cpp
- *
- * Definiation of the merge function in AVX instruction sets.
- *
- */
-
+#include "pch.h"
 #include <immintrin.h>
 #include <type_traits>
 #include <cstdint>
@@ -49,31 +44,31 @@ namespace aspas
         __m128i max1, min1, max2, min2;
 
         // reverse register v1 
-        ext = _mm256_castps_si256(_mm256_shuffle_ps(_mm256_castsi256_ps(v1), _mm256_castsi256_ps(v1), _MM_SHUFFLE(0, 1, 2, 3)));
-        v1 = _mm256_castps_si256(_mm256_permute2f128_ps(_mm256_castsi256_ps(ext), _mm256_castsi256_ps(ext), 0x03));
+        ext = _mm256_shuffle_epi32(v1, _MM_PERM_ABCD);
+        v1 = _mm256_permute2x128_si256(ext, ext, 0x03);
 
         // level 1 comparison
-        l1 = util::_my_mm256_min_epi32(v0, v1);
-        h1 = util::_my_mm256_max_epi32(v0, v1);
+        l1 = _mm256_min_epi32(v0, v1);
+        h1 = _mm256_max_epi32(v0, v1);
 
         // level 2 comparison
-        l1p = _mm256_castps_si256(_mm256_permute2f128_ps(_mm256_castsi256_ps(l1), _mm256_castsi256_ps(h1), 0x30));
-        h1p = _mm256_castps_si256(_mm256_permute2f128_ps(_mm256_castsi256_ps(l1), _mm256_castsi256_ps(h1), 0x21));
-        l2 = util::_my_mm256_min_epi32(l1p, h1p);
-        h2 = util::_my_mm256_max_epi32(l1p, h1p);
+        l1p = _mm256_permute2x128_si256(l1, h1, 0x30);
+        h1p = _mm256_permute2x128_si256(l1, h1, 0x21);
+        l2 = _mm256_min_epi32(l1p, h1p);
+        h2 = _mm256_max_epi32(l1p, h1p);
 
         // level 3 comparison
         l2p = _mm256_castps_si256(_mm256_shuffle_ps(_mm256_castsi256_ps(l2), _mm256_castsi256_ps(h2), _MM_SHUFFLE(3, 2, 1, 0)));
         h2p = _mm256_castps_si256(_mm256_shuffle_ps(_mm256_castsi256_ps(l2), _mm256_castsi256_ps(h2), _MM_SHUFFLE(1, 0, 3, 2)));
-        l3 = util::_my_mm256_min_epi32(l2p, h2p);
-        h3 = util::_my_mm256_max_epi32(l2p, h2p);
+        l3 = _mm256_min_epi32(l2p, h2p);
+        h3 = _mm256_max_epi32(l2p, h2p);
 
         // level 4 comparison
         l3p = _mm256_castps_si256(_mm256_blend_ps(_mm256_castsi256_ps(l3), _mm256_castsi256_ps(h3), 0xAA));
         ext = _mm256_castps_si256(_mm256_blend_ps(_mm256_castsi256_ps(l3), _mm256_castsi256_ps(h3), 0x55));
         h3p = _mm256_castps_si256(_mm256_shuffle_ps(_mm256_castsi256_ps(ext), _mm256_castsi256_ps(ext), _MM_SHUFFLE(2, 3, 0, 1)));
-        l4 = util::_my_mm256_min_epi32(l3p, h3p);
-        h4 = util::_my_mm256_max_epi32(l3p, h3p);
+        l4 = _mm256_min_epi32(l3p, h3p);
+        h4 = _mm256_max_epi32(l3p, h3p);
 
         // final permute/shuffle
         ext1 = _mm256_castps_si256(_mm256_unpacklo_ps(_mm256_castsi256_ps(l4), _mm256_castsi256_ps(h4)));
@@ -82,18 +77,17 @@ namespace aspas
         v1 = _mm256_castps_si256(_mm256_permute2f128_ps(_mm256_castsi256_ps(ext1), _mm256_castsi256_ps(ext2), 0x31));
     }
 
-   
     /**
-     * Float vector _mm256_castsi256_pd( version:
+     * Float vector (__m256) version:
      * This method performs the in-register merge of two sorted vectors.
      *
      * @param v0 v1 sorted vector registers
      * @return sorted data stored horizontally in the two registers
      *
      */
-    /*template <typename T>
+   /* template <typename T>
     typename std::enable_if<std::is_same<T, __m256>::value>::type*/
-        void in_register_merge(__m256& v0, __m256& v1)
+    void    in_register_merge(__m256& v0, __m256& v1)
     {
         __m256 l1, h1, l1p, h1p, l2, h2, l2p, h2p, l3, h3, l3p, h3p, l4, h4;
         __m256 ext, ext1, ext2;
@@ -134,7 +128,7 @@ namespace aspas
         v1 = _mm256_permute2f128_ps(ext1, ext2, 0x31);
     }
 
-    
+  
     /**
      * Double vector (__m256d) version:
      * This method performs the in-register merge of two sorted vectors.
@@ -143,15 +137,16 @@ namespace aspas
      * @return sorted data stored horizontally in the two registers
      *
      */
-   /* template <typename T>
+    /*template <typename T>
     typename std::enable_if<std::is_same<T, __m256d>::value>::type*/
-      void  in_register_merge(__m256d& v0, __m256d& v1)
+    void    in_register_merge(__m256d& v0, __m256d& v1)
     {
         __m256d ext, l1, h1, l1p, h1p, l2, h2, l2p, h2p, l3, h3;
         __m256d ext1, ext2;
         // reverse register v1 
-        ext = _mm256_shuffle_pd(v1, v1, 0x5);
-        v1 = _mm256_permute2f128_pd(ext, ext, 0x03);
+        // ext = _mm256_shuffle_pd(v1, v1, 0x5);
+        // v1  = _mm256_permute2f128_pd(ext, ext, 0x03);
+        v1 = _mm256_permute4x64_pd(v1, _MM_PERM_ABCD);
         // level 1 comparison
         l1 = _mm256_min_pd(v0, v1);
         h1 = _mm256_max_pd(v0, v1);
@@ -172,11 +167,9 @@ namespace aspas
         v1 = _mm256_permute2f128_pd(ext1, ext2, 0x31);
     }
 
-   
-
-    template <typename T>
-    typename std::enable_if<std::is_same<T, int>::value>::type
-        merge(T* inputA, uint32_t sizeA, T* inputB, uint32_t sizeB, T* output)
+    /*template <typename T>
+    typename std::enable_if<std::is_same<T, int>::value>::type*/
+    void    merge(int* inputA, uint32_t sizeA, int* inputB, uint32_t sizeB, int* output)
     {
         __m256i vec0;
         __m256i vec1;
@@ -363,11 +356,9 @@ namespace aspas
         }
     }
 
-    
-
-    template <typename T>
-    typename std::enable_if<std::is_same<T, float>::value>::type
-        merge(T* inputA, uint32_t sizeA, T* inputB, uint32_t sizeB, T* output)
+    /*template <typename T>
+    typename std::enable_if<std::is_same<T, float>::value>::type*/
+    void    merge(float* inputA, uint32_t sizeA, float* inputB, uint32_t sizeB, float* output)
     {
         __m256 vec0;
         __m256 vec1;
@@ -554,16 +545,14 @@ namespace aspas
         }
     }
 
-    
-
-    template <typename T>
-    typename std::enable_if<std::is_same<T, double>::value>::type
-        merge(T* inputA, uint32_t sizeA, T* inputB, uint32_t sizeB, T* output)
+    /*template <typename T>
+    typename std::enable_if<std::is_same<T, double>::value>::type*/
+    void    merge(double* inputA, uint32_t sizeA, double* inputB, uint32_t sizeB, double* output)
     {
         __m256d vec0;
         __m256d vec1;
 
-        uint8_t stride = (uint8_t)simd_width::AVX_DOUBLE;
+        const uint8_t stride = (uint8_t)simd_width::AVX_DOUBLE;
         uint32_t i0 = 0;
         uint32_t i1 = 0;
         uint32_t iout = 0;
@@ -745,5 +734,4 @@ namespace aspas
         }
     }
 
-    
 } // end namespace aspas
