@@ -125,6 +125,6 @@ namespace aspas
 #endif
 
 #ifdef __MIC__
-#include "sorter_mic.hpp" 
+#include "sorter_avx512.h" 
 #endif
 

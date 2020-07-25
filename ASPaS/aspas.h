@@ -17,7 +17,7 @@
 
 #include <cstdint>
 //#include <unistd.h>
-#define __AVX__
+#define __AVX2__
 
 #include "sorter.h"
 #include "merger.h"

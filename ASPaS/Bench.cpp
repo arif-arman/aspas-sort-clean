@@ -5,30 +5,41 @@
 #include "aspas.h"
 #include <iostream>
 #include <random>
+#include <omp.h>
 
-typedef float Key;
+typedef double Key;
 #define Keysize sizeof(Key)
+#define N_LOGICAL   12
 
 void Sort(uint64_t n) {
+    printf("---------------------------------\n");
     uint64_t sz = 1LLU << 30;
     uint64_t tot_n = sz / Keysize;
 
-    Key* A = (Key*)VirtualAlloc(NULL, sz, MEM_COMMIT, PAGE_READWRITE);
-    Key* A_copy = (Key*)VirtualAlloc(NULL, sz, MEM_COMMIT, PAGE_READWRITE);
-    Key* S = (Key*)VirtualAlloc(NULL, sz, MEM_COMMIT, PAGE_READWRITE);
+    Key* A =        (Key*)VirtualAlloc(NULL, sz, MEM_COMMIT, PAGE_READWRITE);
+    Key* A_copy =   (Key*)VirtualAlloc(NULL, sz, MEM_COMMIT, PAGE_READWRITE);
+    Key* S =        (Key*)VirtualAlloc(NULL, sz, MEM_COMMIT, PAGE_READWRITE);
     
-    std::mt19937 g;
-    //std::uniform_int_distribution<Key> d;
-    std::uniform_real_distribution<Key> d;
+    /*std::mt19937 g;
+    std::uniform_int_distribution<Key> d;*/
+
+    std::default_random_engine g;
+    std::uniform_real_distribution<Key> d; 
+
     FOR(i, n, 1) A[i] = d(g);
     memcpy(A_copy, A, sz);
     memcpy(S, A, sz);
-    std::sort(S,  S + n);
+    omp_set_num_threads(N_LOGICAL);
+    printf("Running std::sort for correctness ... ");
+#pragma omp parallel for
+    for(int i = 0; i < (tot_n / n); ++i)
+        std::sort(S + i * n, S + (i + 1) * n);
+    printf("done\n");
 
-    const int repeat = 10;
+    const int repeat = 3;
 
     hrc::time_point st, en; double el = 0;
-    printf("Running aspas::sort on N: %llu ...\n", n);
+    printf("Running aspas::sort on N: %llu, Keysize: %lu bytes ...\n", n, Keysize);
     FOR(i, repeat, 1) {
         printf("Iter: %3lu ... ", i);
         memcpy(A, A_copy, sz);
@@ -44,16 +55,19 @@ void Sort(uint64_t n) {
     }
     
     printf("\r                                 \r");
-    printf("Done\n");
     printf("Elapsed: %.2f ms/iter, Speed: %.2f M/s\n", el / repeat, tot_n * repeat / el / 1e3);
 
     if (A[132] == 123) printf("\n");
 
     printf("Checking correctness ... ");
-    FOR(i, n, 1) {
-        if (A[i] != S[i]) {
-            printf("Incorrect @ %llu\n", i);
-            break;
+#pragma omp parallel for
+    for (int i = 0; i < (tot_n / n); ++i) {
+        Key* a = A + i * n, * s = S + i * n;
+        FOR(j, n, 1) {
+            if (a[j] != s[j]) {
+                printf("Incorrect @ idx %llu @ segment %llu\n", j, i);
+                break;
+            }
         }
     }
     printf("done\n");
@@ -65,6 +79,7 @@ void Sort(uint64_t n) {
 
 int main()
 {
+    SetThreadAffinityMask(GetCurrentThread(), 1 << 4);
     
     FOR_INIT(i, 4, 29, 1)
         Sort(1LLU << i);

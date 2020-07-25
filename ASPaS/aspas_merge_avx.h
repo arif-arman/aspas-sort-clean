@@ -563,7 +563,7 @@ namespace aspas
         __m256d vec0;
         __m256d vec1;
 
-        uint8_t stride = (uint8_t)simd_width::AVX_DOUBLE;
+        const uint8_t stride = (uint8_t)simd_width::AVX_DOUBLE;
         uint32_t i0 = 0;
         uint32_t i1 = 0;
         uint32_t iout = 0;
