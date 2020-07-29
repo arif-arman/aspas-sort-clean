@@ -51,7 +51,6 @@ namespace aspas
     {
         internal::sorter(array, size);
         internal::merger(array, size);
-        return;
     }
 
   

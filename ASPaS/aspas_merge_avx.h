@@ -174,9 +174,9 @@ namespace aspas
 
    
 
-    template <typename T>
-    typename std::enable_if<std::is_same<T, int>::value>::type
-        merge(T* inputA, uint32_t sizeA, T* inputB, uint32_t sizeB, T* output)
+    /*template <typename T>
+    typename std::enable_if<std::is_same<T, int>::value>::type*/
+    void    merge(int* inputA, uint32_t sizeA, int* inputB, uint32_t sizeB, int* output)
     {
         __m256i vec0;
         __m256i vec1;
@@ -365,9 +365,9 @@ namespace aspas
 
     
 
-    template <typename T>
-    typename std::enable_if<std::is_same<T, float>::value>::type
-        merge(T* inputA, uint32_t sizeA, T* inputB, uint32_t sizeB, T* output)
+    /*template <typename T>
+    typename std::enable_if<std::is_same<T, float>::value>::type*/
+    void    merge(float* inputA, uint32_t sizeA, float* inputB, uint32_t sizeB, float* output)
     {
         __m256 vec0;
         __m256 vec1;
@@ -556,9 +556,9 @@ namespace aspas
 
     
 
-    template <typename T>
-    typename std::enable_if<std::is_same<T, double>::value>::type
-        merge(T* inputA, uint32_t sizeA, T* inputB, uint32_t sizeB, T* output)
+    /*template <typename T>
+    typename std::enable_if<std::is_same<T, double>::value>::type*/
+    void    merge(double* inputA, uint32_t sizeA, double* inputB, uint32_t sizeB, double* output)
     {
         __m256d vec0;
         __m256d vec1;

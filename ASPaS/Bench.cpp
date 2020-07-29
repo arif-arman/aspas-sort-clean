@@ -7,9 +7,9 @@
 #include <random>
 #include <omp.h>
 
-typedef double Key;
+typedef int Key;
 #define Keysize sizeof(Key)
-#define N_LOGICAL   12
+#define N_LOGICAL   16
 
 void Sort(uint64_t n) {
     printf("---------------------------------\n");
@@ -20,11 +20,11 @@ void Sort(uint64_t n) {
     Key* A_copy =   (Key*)VirtualAlloc(NULL, sz, MEM_COMMIT, PAGE_READWRITE);
     Key* S =        (Key*)VirtualAlloc(NULL, sz, MEM_COMMIT, PAGE_READWRITE);
     
-    /*std::mt19937 g;
-    std::uniform_int_distribution<Key> d;*/
+    std::mt19937 g;
+    std::uniform_int_distribution<Key> d;
 
-    std::default_random_engine g;
-    std::uniform_real_distribution<Key> d; 
+   /* std::default_random_engine g;
+    std::uniform_real_distribution<Key> d; */
 
     FOR(i, n, 1) A[i] = d(g);
     memcpy(A_copy, A, sz);
@@ -36,7 +36,7 @@ void Sort(uint64_t n) {
         std::sort(S + i * n, S + (i + 1) * n);
     printf("done\n");
 
-    const int repeat = 3;
+    const int repeat = 10;
 
     hrc::time_point st, en; double el = 0;
     printf("Running aspas::sort on N: %llu, Keysize: %lu bytes ...\n", n, Keysize);
@@ -77,11 +77,73 @@ void Sort(uint64_t n) {
     VirtualFree(S, 0, MEM_RELEASE);
 }
 
+void merge_test(bool in_cache = false) {
+
+    printf("Merging two arrays, in_cache: %d ...\n", in_cache);
+
+    ui64 n_tot = in_cache ? 1LLU << 17 : 1LLU << 25;
+    ui64 sz_tot = n_tot * Keysize;
+
+
+    Key* A = VALLOC(sz_tot);
+    Key* C = VALLOC(sz_tot + 4096);
+
+    memset(A, 0, sz_tot);
+    memset(C, 0, sz_tot);
+
+    ui64 lenA = n_tot >> 1;
+
+    //generate pairs
+    printf("Generating numbers ... ");
+    std::mt19937 g;
+    std::uniform_int_distribution<int> dist;
+    FOR(i, n_tot, 1) A[i] = dist(g);
+    printf("done\n");
+
+    printf("Preparing merge pairs ... ");
+#pragma omp parallel for
+    for (int i = 0; i < n_tot; i += lenA)
+        std::sort(A + i, A + i + lenA);
+    printf("done\n");
+
+    printf("Start merge on total: %llu, per stream: %llu ...\n", n_tot, lenA);
+    int total_clocks = 0;
+
+    uint64_t repeat = in_cache ? 1e4 : 100;
+
+    double el = 0;
+
+    FOR(j, repeat, 1) {
+        hrc::time_point st = hrc::now();
+        aspas::merge(A, lenA, A + lenA, lenA, C);
+        hrc::time_point en = hrc::now();
+        el += ELAPSED_MS(st, en);
+        //ui violations = 0;
+        //FOR(i, n_tot - 1, 1) {
+        //	if (C[i] > C[i + 1]) {
+        //		violations++;
+        //		//printf("Violation @ %llu\n", i);
+        //		//break;
+        //	}
+        //}
+        //printf("Violations  %llu\n", violations);
+    }
+    printf("> merged in %.3f sec, speed %.1f M/sec \n,", time, (double)n_tot * repeat / el / 1e3);
+
+    VFREE(A);
+    VFREE(C);
+}
+
 int main()
 {
     SetThreadAffinityMask(GetCurrentThread(), 1 << 4);
     
-    FOR_INIT(i, 4, 29, 1)
-        Sort(1LLU << i);
+    /*FOR_INIT(i, 4, 29, 1)
+        Sort(1LLU << i);*/
+    //Sort(64);
+
+    merge_test();
+    merge_test(true);
+
     return 0;
 }
