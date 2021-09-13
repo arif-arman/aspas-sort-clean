@@ -47,7 +47,7 @@ namespace aspas
      */
      //! This method sorts the given input array.
     template <class T>
-    void sort(T* array, uint32_t size)
+    __forceinline void sort(T* array, uint32_t size)
     {
         internal::sorter(array, size);
         internal::merger(array, size);

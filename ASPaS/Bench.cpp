@@ -12,22 +12,27 @@ typedef int Key;
 #define N_LOGICAL   16
 
 void Sort(uint64_t n) {
+//#define STD_CORRECTNESS
     printf("---------------------------------\n");
-    uint64_t sz = 1LLU << 30;
+    uint64_t sz = 1LLU << 30; // 1LLU << 19; // 
     uint64_t tot_n = sz / Keysize;
+
+    printf("Tot n: %llu, Sort n: %llu\n", tot_n, n);
 
     Key* A =        (Key*)VirtualAlloc(NULL, sz, MEM_COMMIT, PAGE_READWRITE);
     Key* A_copy =   (Key*)VirtualAlloc(NULL, sz, MEM_COMMIT, PAGE_READWRITE);
-    Key* S =        (Key*)VirtualAlloc(NULL, sz, MEM_COMMIT, PAGE_READWRITE);
+
     
     std::mt19937 g;
     std::uniform_int_distribution<Key> d;
 
-   /* std::default_random_engine g;
-    std::uniform_real_distribution<Key> d; */
-
     FOR(i, n, 1) A[i] = d(g);
     memcpy(A_copy, A, sz);
+
+
+#ifdef STD_CORRECTNESS
+    Key* S = (Key*)VirtualAlloc(NULL, sz, MEM_COMMIT, PAGE_READWRITE);
+
     memcpy(S, A, sz);
     omp_set_num_threads(N_LOGICAL);
     printf("Running std::sort for correctness ... ");
@@ -35,8 +40,9 @@ void Sort(uint64_t n) {
     for(int i = 0; i < (tot_n / n); ++i)
         std::sort(S + i * n, S + (i + 1) * n);
     printf("done\n");
+#endif
 
-    const int repeat = 10;
+    const int repeat = 3;
 
     hrc::time_point st, en; double el = 0;
     printf("Running aspas::sort on N: %llu, Keysize: %lu bytes ...\n", n, Keysize);
@@ -59,6 +65,7 @@ void Sort(uint64_t n) {
 
     if (A[132] == 123) printf("\n");
 
+#ifdef STD_CORRECTNESS
     printf("Checking correctness ... ");
 #pragma omp parallel for
     for (int i = 0; i < (tot_n / n); ++i) {
@@ -71,10 +78,11 @@ void Sort(uint64_t n) {
         }
     }
     printf("done\n");
+    VirtualFree(S, 0, MEM_RELEASE);
+#endif 
 
     VirtualFree(A, 0, MEM_RELEASE);
     VirtualFree(A_copy, 0, MEM_RELEASE);
-    VirtualFree(S, 0, MEM_RELEASE);
 }
 
 void merge_test(bool in_cache = false) {
@@ -138,12 +146,20 @@ int main()
 {
     SetThreadAffinityMask(GetCurrentThread(), 1 << 4);
     
-    /*FOR_INIT(i, 4, 29, 1)
+    // in-cache
+    /*FOR_INIT(i, 3, 18, 1)
         Sort(1LLU << i);*/
     //Sort(64);
 
-    merge_test();
-    merge_test(true);
+    /*merge_test();
+    merge_test(true);*/
+
+    // out-of-cache
+    /*FOR_INIT(i, 17, 29, 1)
+        Sort(1LLU << i);*/
+    Sort(1LLU << 28);
+
+    system("pause");
 
     return 0;
 }
