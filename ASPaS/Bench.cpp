@@ -14,7 +14,7 @@ typedef int Key;
 void Sort(uint64_t n) {
 //#define STD_CORRECTNESS
     printf("---------------------------------\n");
-    uint64_t sz = 1LLU << 30; // 1LLU << 19; // 
+    uint64_t sz = n * Keysize; // 1LLU << 30; // 1LLU << 19; // 
     uint64_t tot_n = sz / Keysize;
 
     printf("Tot n: %llu, Sort n: %llu\n", tot_n, n);
@@ -42,7 +42,7 @@ void Sort(uint64_t n) {
     printf("done\n");
 #endif
 
-    const int repeat = 3;
+    const int repeat = 20;
 
     hrc::time_point st, en; double el = 0;
     printf("Running aspas::sort on N: %llu, Keysize: %lu bytes ...\n", n, Keysize);
@@ -53,6 +53,7 @@ void Sort(uint64_t n) {
         st = hrc::now();
         while (p < endp) {
             aspas::sort(p, n); 
+            //aspas::parallel_sort<int>(p, n);
             p += n;
         }
         en = hrc::now();
@@ -157,7 +158,10 @@ int main()
     // out-of-cache
     /*FOR_INIT(i, 17, 29, 1)
         Sort(1LLU << i);*/
-    Sort(1LLU << 28);
+    //Sort(1LLU << 28);
+    
+    // parallel sort: works only for 100M; for power of two and 200M -> crash; 300M runs for a long time
+    Sort(1e8);
 
     system("pause");
 

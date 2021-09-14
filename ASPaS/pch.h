@@ -9,6 +9,7 @@
 
 // add headers that you want to pre-compile here
 #include <Windows.h>
+#include <thread>
 #include <cstdint>
 #include <chrono>
 using namespace std::chrono;
